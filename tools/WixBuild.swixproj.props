@@ -15,7 +15,10 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <PackagePreprocessorDefinitions>$(PackagePreprocessorDefinitions);version=$(FullBuildVersionString)</PackagePreprocessorDefinitions>
+    <PackagePreprocessorDefinitions>
+      $(PackagePreprocessorDefinitions);
+      version=$(FullBuildVersionString);
+    </PackagePreprocessorDefinitions>
   </PropertyGroup>
 
   <ItemGroup>
