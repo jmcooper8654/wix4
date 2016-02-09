@@ -23,6 +23,14 @@
             </Component>
 
             <Component>
+                <File Source="libs\balutil\inc\BalBaseBootstrapperApplicationProc.h" />
+            </Component>
+
+            <Component>
+                <File Source="libs\balutil\inc\BalBootstrapperEngine.h" />
+            </Component>
+
+            <Component>
                 <File Source="libs\balutil\inc\balcondition.h" />
             </Component>
 
@@ -43,6 +51,14 @@
             </Component>
 
             <Component>
+                <File Source="BootstrapperApplication.h" />
+            </Component>
+
+            <Component>
+                <File Source="BootstrapperEngine.h" />
+            </Component>
+
+            <Component>
                 <File Source="IBootstrapperApplication.h" />
             </Component>
 
@@ -60,6 +76,9 @@
         <ComponentGroup Id="DutilHeaderComponents" Directory="SdkIncFolder">
             <Component>
                 <File Source="aclutil.h" />
+            </Component>
+            <Component>
+                <File Source="apputil.h" />
             </Component>
             <Component>
                 <File Source="apuputil.h" />
@@ -168,6 +187,9 @@
             </Component>
             <Component>
                 <File Source="sceutil.h" />
+            </Component>
+            <Component>
+                <File Source="sczutil.h" />
             </Component>
             <Component>
                 <File Source="shelutil.h" />

@@ -37,15 +37,12 @@
   <Target Name="InitializeVariables">
     <PropertyGroup>
       <ProjectFolder>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\..\))</ProjectFolder>
-      <ProjectHistoryFolderRelativePath>history</ProjectHistoryFolderRelativePath>
       <ProjectHistoryFile>$(ProjectFolder)History.md</ProjectHistoryFile>
-      <SpecialHistoryFileName>readme.md</SpecialHistoryFileName>
     </PropertyGroup>
 
     <Error Text="Cannot locate project's private/public keypair at: $(OfficialBuildPrivateKeyPair). Ensure that the OfficialBuildPrivateKeyPair arguments are correct." Condition=" !Exists('$(OfficialBuildPrivateKeyPair)') " />
 
     <Error Text="Cannot locate project's root folder at: $(ProjectFolder)." Condition=" !Exists('$(ProjectFolder)') " />
-    <Error Text="Cannot locate project's history folder at: $(ProjectFolder)$(ProjectHistoryFolderRelativePath)." Condition=" !Exists('$(ProjectFolder)$(ProjectHistoryFolderRelativePath)') " />
     <Error Text="Cannot locate project's History.md file at: $(ProjectHistoryFile). Ensure that the Major and Minor arguments are correct." Condition=" !Exists('$(ProjectHistoryFile)') " />
   </Target>
 
@@ -59,7 +56,7 @@
   -->
   <Target Name="BuildProject">
     <MSBuild Projects="$(ProjectFolder)\tools\WixRelease.relproj"
-             Properties="OFFICIAL_WIX_BUILD=$(OfficialBuildPrivateKeyPair);ProjectFolder=$(ProjectFolder);HistoryFolderRelativePath=$(ProjectHistoryFolderRelativePath);HistoryFile=$(ProjectHistoryFile);SpecialHistoryFileName=$(SpecialHistoryFileName)"
+             Properties="OFFICIAL_WIX_BUILD=$(OfficialBuildPrivateKeyPair)"
              Targets="Build" />
   </Target>
 
@@ -194,7 +191,7 @@
     <Exec Command='git -c user.name="WixBuild" -c user.email="wix@wixtoolset.org" commit -m "WixBuild: Version $(Version)"'
           WorkingDirectory="$(ProjectFolder)" ContinueOnError="true" />
 
-    <Exec Command='git push --repo https://$(GithubUser):$(GithubPassword)@github.com/wixtoolset/wix3.git origin develop'
+    <Exec Command='git push --repo https://$(GithubUser):$(GithubPassword)@github.com/wixtoolset/wix4.git origin HEAD:develop'
           WorkingDirectory="$(ProjectFolder)" />
 
     <Message Importance="Normal" Text="History push complete." />

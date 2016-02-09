@@ -10,6 +10,8 @@
 #include <windows.h>
 #include <msiquery.h>
 
+#include "BootstrapperEngine.h"
+#include "BootstrapperApplication.h"
 #include "IBootstrapperEngine.h"
 #include "IBootstrapperApplication.h"
 
@@ -90,12 +92,14 @@ public: // IBootstrapperApplication
         return IDCANCEL;
     }
 
-    virtual STDMETHODIMP_(int) OnDetectBegin(
+    virtual STDMETHODIMP_(HRESULT) OnDetectBegin(
         __in BOOL /*fInstalled*/,
-        __in DWORD /*cPackages*/
+        __in DWORD /*cPackages*/,
+        __out BOOL* pfCancel
         )
     {
-        return CheckCanceled() ? IDCANCEL : IDNOACTION;
+        *pfCancel = CheckCanceled();
+        return S_OK;
     }
 
     virtual STDMETHODIMP_(int) OnDetectForwardCompatibleBundle(
@@ -583,6 +587,23 @@ public: // IBootstrapperApplication
     {
     }
 
+    virtual STDMETHODIMP_(HRESULT) BAProc(
+        __in BOOTSTRAPPER_APPLICATION_MESSAGE /*message*/,
+        __in const LPVOID /*pvArgs*/,
+        __inout LPVOID /*pvResults*/,
+        __in_opt LPVOID /*pvContext*/
+        )
+    {
+        /*
+        switch (message)
+        {
+        default:
+            return E_NOTIMPL;
+        }
+        */
+        return E_NOTIMPL;
+    }
+
 protected:
     //
     // PromptCancel - prompts the user to close (if not forced).
@@ -590,8 +611,8 @@ protected:
     virtual BOOL PromptCancel(
         __in HWND hWnd,
         __in BOOL fForceCancel,
-        __in_z LPCWSTR wzMessage,
-        __in_z LPCWSTR wzCaption
+        __in_z_opt LPCWSTR wzMessage,
+        __in_z_opt LPCWSTR wzCaption
         )
     {
         ::EnterCriticalSection(&m_csCanceled);
@@ -636,14 +657,14 @@ protected:
 
     CBalBaseBootstrapperApplication(
         __in IBootstrapperEngine* pEngine,
-        __in const BOOTSTRAPPER_COMMAND* pCommand,
+        __in const BOOTSTRAPPER_CREATE_ARGS* pArgs,
         __in DWORD dwRetryCount = 0,
         __in DWORD dwRetryTimeout = 1000
         )
     {
         m_cReferences = 1;
-        m_display = pCommand->display;
-        m_restart = pCommand->restart;
+        m_display = pArgs->pCommand->display;
+        m_restart = pArgs->pCommand->restart;
 
         pEngine->AddRef();
         m_pEngine = pEngine;
@@ -664,14 +685,16 @@ protected:
         ReleaseNullObject(m_pEngine);
     }
 
+protected:
+    CRITICAL_SECTION m_csCanceled;
+    BOOL m_fCanceled;
+
 private:
     long m_cReferences;
     BOOTSTRAPPER_DISPLAY m_display;
     BOOTSTRAPPER_RESTART m_restart;
     IBootstrapperEngine* m_pEngine;
 
-    CRITICAL_SECTION m_csCanceled;
-    BOOL m_fCanceled;
     BOOL m_fApplying;
     BOOL m_fRollingBack;
 

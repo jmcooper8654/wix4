@@ -16,5 +16,6 @@
 #include <windows.h>
 
 #include <dutil.h>
+#include <apputil.h>
 
 #include "engine.h"

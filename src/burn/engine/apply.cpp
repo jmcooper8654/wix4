@@ -74,6 +74,7 @@ static void UpdateCacheSuccessProgress(
     );
 static HRESULT LayoutBundle(
     __in BURN_USER_EXPERIENCE* pUX,
+    __in BURN_VARIABLES* pVariables,
     __in HANDLE hPipe,
     __in_z LPCWSTR wzExecutableName,
     __in_z LPCWSTR wzLayoutDirectory,
@@ -326,12 +327,12 @@ extern "C" HRESULT ApplyRegister(
         // resume previous session
         if (pEngineState->registration.fPerMachine)
         {
-            hr = ElevationSessionResume(pEngineState->companionConnection.hPipe, pEngineState->registration.sczResumeCommandLine, pEngineState->registration.fDisableResume);
+            hr = ElevationSessionResume(pEngineState->companionConnection.hPipe, pEngineState->registration.sczResumeCommandLine, pEngineState->registration.fDisableResume, &pEngineState->variables);
             ExitOnFailure(hr, "Failed to resume registration session in per-machine process.");
         }
         else
         {
-            hr =  RegistrationSessionResume(&pEngineState->registration);
+            hr = RegistrationSessionResume(&pEngineState->registration, &pEngineState->variables);
             ExitOnFailure(hr, "Failed to resume registration session.");
         }
     }
@@ -490,7 +491,7 @@ extern "C" HRESULT ApplyCache(
                 break;
 
             case BURN_CACHE_ACTION_TYPE_LAYOUT_BUNDLE:
-                hr = LayoutBundle(pUX, hPipe, pCacheAction->bundleLayout.sczExecutableName, pCacheAction->bundleLayout.sczLayoutDirectory, pCacheAction->bundleLayout.sczUnverifiedPath, qwSuccessfulCachedProgress, pPlan->qwCacheSizeTotal);
+                hr = LayoutBundle(pUX, pVariables, hPipe, pCacheAction->bundleLayout.sczExecutableName, pCacheAction->bundleLayout.sczLayoutDirectory, pCacheAction->bundleLayout.sczUnverifiedPath, qwSuccessfulCachedProgress, pPlan->qwCacheSizeTotal);
                 if (SUCCEEDED(hr))
                 {
                     UpdateCacheSuccessProgress(pPlan, pCacheAction, &qwSuccessfulCachedProgress);
@@ -861,7 +862,7 @@ LExit:
 }
 
 static HRESULT ExtractContainer(
-    __in HANDLE hEngineFile,
+    __in HANDLE /*hEngineFile*/,
     __in BURN_USER_EXPERIENCE* /*pUX*/,
     __in BURN_CONTAINER* pContainer,
     __in_z LPCWSTR wzContainerPath,
@@ -873,26 +874,7 @@ static HRESULT ExtractContainer(
     BURN_CONTAINER_CONTEXT context = { };
     HANDLE hContainerHandle = INVALID_HANDLE_VALUE;
     LPWSTR sczCurrentProcessPath = NULL;
-    int nContainerPathIsCurrentPath = 0;
     LPWSTR sczExtractPayloadId = NULL;
-
-    // If the container is attached to the executable and the container path points
-    // at our currently running executable then use the engine file handle since
-    // that is faster/better than opening a new file handle.
-    if (pContainer->fPrimary)
-    {
-        // This is all "best effort" since in the worst case scenario we open a new
-        // handle to the container.
-        hr = PathForCurrentProcess(&sczCurrentProcessPath, NULL);
-        if (SUCCEEDED(hr))
-        {
-            hr = PathCompare(sczCurrentProcessPath, wzContainerPath, &nContainerPathIsCurrentPath);
-            if (SUCCEEDED(hr) && CSTR_EQUAL == nContainerPathIsCurrentPath)
-            {
-                hContainerHandle = hEngineFile;
-            }
-        }
-    }
 
     hr = ContainerOpen(&context, pContainer, hContainerHandle, wzContainerPath);
     ExitOnFailure(hr, "Failed to open container: %ls.", pContainer->sczId);
@@ -996,6 +978,7 @@ static void UpdateCacheSuccessProgress(
 
 static HRESULT LayoutBundle(
     __in BURN_USER_EXPERIENCE* pUX,
+    __in BURN_VARIABLES* pVariables,
     __in HANDLE hPipe,
     __in_z LPCWSTR wzExecutableName,
     __in_z LPCWSTR wzLayoutDirectory,
@@ -1006,6 +989,7 @@ static HRESULT LayoutBundle(
 {
     HRESULT hr = S_OK;
     LPWSTR sczBundlePath = NULL;
+    LPWSTR sczBundleSourcePath = NULL;
     LPWSTR sczDestinationPath = NULL;
     int nEquivalentPaths = 0;
     BURN_CACHE_ACQUIRE_PROGRESS_CONTEXT progress = { };
@@ -1024,6 +1008,21 @@ static HRESULT LayoutBundle(
     if (CSTR_EQUAL == nEquivalentPaths)
     {
         ExitFunction1(hr = S_OK);
+    }
+
+    hr = VariableGetString(pVariables, BURN_BUNDLE_SOURCE_PROCESS_PATH, &sczBundleSourcePath);
+    if (E_NOTFOUND != hr)
+    {
+        ExitOnFailure(hr, "Failed to get path to bundle source process path to layout.");
+
+        // If the destination path is the currently running bundles source process, bail.
+        hr = PathCompare(sczBundleSourcePath, sczDestinationPath, &nEquivalentPaths);
+        ExitOnFailure(hr, "Failed to determine if layout bundle path was equivalent with source process path.");
+
+        if (CSTR_EQUAL == nEquivalentPaths)
+        {
+            ExitFunction1(hr = S_OK);
+        }
     }
 
     progress.pUX = pUX;
@@ -1093,6 +1092,7 @@ static HRESULT LayoutBundle(
     LogExitOnFailure(hr, MSG_FAILED_LAYOUT_BUNDLE, "Failed to layout bundle: %ls to layout directory: %ls", sczBundlePath, wzLayoutDirectory);
 
 LExit:
+    ReleaseStr(sczBundleSourcePath);
     ReleaseStr(sczDestinationPath);
     ReleaseStr(sczBundlePath);
 
