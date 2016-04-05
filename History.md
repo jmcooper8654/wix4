@@ -1,3 +1,63 @@
+## WixBuild: Version 4.0.3922.0
+
+* SeanHall: WIXFEAT:4951 - Make the BAFunctions interface binary, make WixStdBA forward all BA messages to BAFunctions, and give BAFunctions access to the theme and localization.
+
+* PavelAnfimov: WIXBUG:4772 - Add support for Windows XP for ShelExecUnelevated.
+
+* DavidFlamme: WIXBUG:4785 - Fixing memory leak in InstallPackage.cs
+
+MikeGC: WIXBUG:4878 - fix iniutil memory leak
+
+* jchoover: WIXBUG:4899 - Modified WixStdBA handling of XmlGetAttribute to handle S_FALSE.
+
+* BobArnson: Work around Dev14 change that breaks XP compatibility even when used with v140_xp toolset. See [Connect item on this very issue](https://connect.microsoft.com/VisualStudio/feedback/details/1789709/visual-c-2015-runtime-broken-on-windows-server-2003-c-11-magic-statics). Fixes WIXBUG:4902 and WIXBUG:4908.
+
+* @barnson: Correct file name of local name for Web package per wixtoolset/issues#4904
+
+* @barnson: Write VersionMajor/VersionMinor Uninstall values.
+  * Partial fix for wixtoolset/issues#5171. (Does not write InstallLocation.)
+
+* @barnson: WIXBUG:5185 - correct LPWSTR to LPCWSTR
+
+* @barnson for @firegiantco: Fix wixtoolset/issues#5221.
+  * Use better logic to determine when to send the Burn ancestors switches.
+
+* MikeGC: Add simple combo box support to ThmUtil.
+
+* @barnson: Fix up bad/old links in Learning WiX topic.
+
+* HeathS: WIXFEAT:5230 - Support adding users to Performance Log users group
+
+* HeathS: WIXBUG:5229 - Allow processes to terminate with 0 exit code
+
+* HeathS: WIXBUG:5241 - Call OnExecutePackageComplete only when OnExecutePackageBegin was called
+
+## WixBuild: Version 4.0.3826.0
+
+* @barnson: Add support for command links to ThmUtil.
+  * Command links are supported on Windows Vista and later. On Windows XP, they're plain buttons.
+
+* @barnson: Support system colors in themes.
+  * Implements wixtoolset/issues#4787.
+  * The following "colors" are supported in Font/@Foreground and Font/@Background with the color indices as used by [::GetSysColor](https://msdn.microsoft.com/en-us/library/windows/desktop/ms724371%28v=vs.85%29.aspx):
+    * btnface: COLOR_BTNFACE
+    * btntext: COLOR_BTNTEXT
+    * graytext: COLOR_GRAYTEXT
+    * highlight: COLOR_HIGHLIGHT
+    * highlighttext: COLOR_HIGHLIGHTTEXT
+    * hotlight: COLOR_HOTLIGHT
+    * window: COLOR_WINDOW
+    * windowtext: COLOR_WINDOWTEXT
+
+* @firegiantco via @barnson: ThmUtil cleanups.
+  * ThemeControlExists should take a `const THEME*`.
+  * ThemeSetTextControlEx exposed clunky `fInvalidateControl` and `fInvalidateParent` arguments in an attempt to force controls to redraw. Replace with `fUpdate` more generically and, hidden in the code, hide and show the control, which we found to be the cleanest way of getting transparent text redrawn over a graphical background.
+
+* SeanHall: WIXBUG:4857 - Fix DTF custom actions in Win10 Apps and Features. 
+* SeanHall: Make VS2015 C++ custom action project template reference VS2015 WiX libs.
+
+* BMurri: WIXBUG:5132 - fix incomplete usage of kbKeyBitness parameter of RegDelete() function in DUtil's RegUtil.
+
 ## WixBuild: Version 4.0.3729.0
 
 * jchoover: WIXBUG:5193 - Fix /layout default directory with clean room:
