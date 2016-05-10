@@ -1,15 +1,4 @@
-//-------------------------------------------------------------------------------------------------
-// <copyright file="stub.cpp" company="Outercurve Foundation">
-//   Copyright (c) 2004, Outercurve Foundation.
-//   This software is released under Microsoft Reciprocal License (MS-RL).
-//   The license and further copyright text can be found in the file
-//   LICENSE.TXT at the root directory of the distribution.
-// </copyright>
-//
-// <summary>
-// Setup chainer/bootstrapper executable for WiX toolset.
-// </summary>
-//-------------------------------------------------------------------------------------------------
+// Copyright (c) .NET Foundation and contributors. All rights reserved. Licensed under the Microsoft Reciprocal License. See LICENSE.TXT file in the project root for full license information.
 
 #include "precomp.h"
 
@@ -23,6 +12,8 @@ int WINAPI wWinMain(
 {
     HRESULT hr = S_OK;
     DWORD dwExitCode = 0;
+    LPWSTR sczPath = NULL;
+    HANDLE hEngineFile = INVALID_HANDLE_VALUE;
 
     LPCWSTR rgsczSafelyLoadSystemDlls[] =
     {
@@ -39,12 +30,22 @@ int WINAPI wWinMain(
         L"feclient.dll", // unsafely loaded by DecryptFile().
     };
 
+    // Best effort attempt to get our file handle as soon as possible.
+    hr = PathForCurrentProcess(&sczPath, NULL);
+    if (SUCCEEDED(hr))
+    {
+        hEngineFile = ::CreateFileW(sczPath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    }
+
     AppInitialize(rgsczSafelyLoadSystemDlls, countof(rgsczSafelyLoadSystemDlls));
 
     // call run
-    hr = EngineRun(hInstance, lpCmdLine, nCmdShow, &dwExitCode);
+    hr = EngineRun(hInstance, hEngineFile, lpCmdLine, nCmdShow, &dwExitCode);
     ExitOnFailure(hr, "Failed to run application.");
 
 LExit:
+    ReleaseFileHandle(hEngineFile);
+    ReleaseStr(sczPath);
+
     return FAILED(hr) ? (int)hr : (int)dwExitCode;
 }
